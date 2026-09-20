@@ -13,7 +13,7 @@
   - Model capacity (a tiny model can only learn so much)
   - A clearly defined task
 
-## 1.2 The pipeline (big picture)
+## 1.2 The pipeline 
 **model + tokenizer + training dataset + training arguments + fine-tuning class -> training -> fine-tuned model -> evaluation**
 - **Tokenizer**: converts text into numeric tokens.
 - **Training arguments**: settings (learning rate, batch size, etc.).
@@ -28,9 +28,9 @@
 
 ---
 
-# PART 2: THE TOOLS (Library Options)
+# THE TOOLS (Library Options)
 
-## 2.1 Options for Llama fine-tuning
+## 2.1 Options for fine-tuning
 | Library | Strength | Ideal for |
 |---|---|---|
 | TorchTune | Configurable templates (recipes) | Scaling quickly |
@@ -38,10 +38,10 @@
 | Unsloth | Efficient memory usage | Limited hardware |
 | Axolotl | Modular approach | No extensive reconfiguration |
 
-## 2.2 Are Hugging Face and TorchTune different ways to fine-tune?
+## 2.2 Are Hugging Face (SFTTrainer) and TorchTune different ways to fine-tune?
 **Yes. They are two different toolchains for the same job (supervised fine-tuning).** You normally pick one per project, not both.
 
-### What "Hugging Face" means here
+### Hugging Face (SFTTrainer)
 An ecosystem of libraries plus a model hub, each covering one step:
 | Piece | Role |
 |---|---|
@@ -55,8 +55,8 @@ An ecosystem of libraries plus a model hub, each covering one step:
 - Style: you write **Python code** and wire the pieces together.
 - Strength: works with a huge range of models, not just Llama.
 
-### What "TorchTune" means
-- A PyTorch library focused on fine-tuning LLMs (Llama in these slides).
+### TorchTune
+- A PyTorch library focused on fine-tuning LLMs.
 - Style: **command line + YAML config**. Pick a **recipe** and a **config**, then run `tune run`.
 - Strength: reproducible, quick to scale, less code.
 - Can still use Hugging Face `datasets` for data, which is why data prep looks the same in both routes.
@@ -70,18 +70,6 @@ An ecosystem of libraries plus a model hub, each covering one step:
 | LoRA | `peft` + `LoraConfig` | LoRA recipes/configs |
 | Quantization | `bitsandbytes` | Via configs (e.g. 8-bit optimizer in sample recipe) |
 | Best for | Multiple models, custom experiments | Scaling fast, reproducible Llama runs |
-
-### How to choose
-- Flexibility and many model types -> Hugging Face SFTTrainer
-- Reproducible, config-driven Llama runs that scale -> TorchTune
-- Tight on GPU memory -> Unsloth, or LoRA + quantization in either route
-- Modular setup with little rework -> Axolotl
-
-### Shared across every route
-- Same data prep (train/validation/test, one text field)
-- Same core concepts (learning rate, batch size, epochs, loss)
-- Same techniques available (LoRA, quantization)
-- Same evaluation (held-out data + ROUGE)
 
 ---
 
@@ -152,7 +140,7 @@ ds_preprocessed = load_from_disk("preprocessed_dataset")
 
 **One-liner:** load dataset -> inspect/filter -> preprocess -> split -> load model + tokenizer -> (quantize) -> (LoRA config) -> training arguments -> SFTTrainer -> train -> generate on eval set -> ROUGE
 
-## 4.2 TorchTune route
+## 4.2 Torch Tune route
 1. **Install**: `pip3 install torchtune`
 2. **Pick a model config**: `tune ls`
 3. **Prepare the dataset** with HF `datasets` -> `ds.save_to_disk("preprocessed_dataset")`
@@ -165,7 +153,7 @@ ds_preprocessed = load_from_disk("preprocessed_dataset")
 
 ---
 
-# PART 5: TORCHTUNE IN DETAIL
+# PART 5: TORCH TUNE IN DETAIL
 
 ## 5.1 Recipes vs configs
 - **Recipe** = the training procedure (what code runs)
@@ -239,9 +227,9 @@ with open(yaml_file_path, "w") as yaml_file:
 
 ---
 
-# PART 6: HUGGING FACE TRAINING IN DETAIL
+# PART 6: Hugging Face (SFTTrainer) TRAINING IN DETAIL
 
-## 6.1 What you need
+## 6.1 requirements
 1. Language model + tokenizer (e.g. `Maykeye/TinyLLama-v0`)
 2. Training dataset (Bitext customer service)
 3. Training arguments
@@ -338,17 +326,6 @@ rouge = evaluate.load('rouge')
 results = rouge.compute(predictions=predictions, references=references)
 print(results)
 ```
-- `outputs[0, inputs.shape[1]:]` skips the prompt and decodes only the new tokens.
-
-## Results: fine-tuned vs not
-| Metric | Fine-tuned | No fine-tuning |
-|---|---|---|
-| rouge1 | 0.224 | 0.131 |
-| rouge2 | 0.040 | 0.046 |
-| rougeL | 0.150 | 0.084 |
-| rougeLsum | 0.187 | 0.122 |
-- Fine-tuning improved rouge1, rougeL, rougeLsum. rouge2 dipped slightly, so it's not a uniform win.
-- Caveat: scores are low in absolute terms. Correct answers phrased differently score poorly. Use ROUGE as a signal, not the whole truth.
 
 ---
 
@@ -397,13 +374,6 @@ trainer = SFTTrainer(
 trainer.train()
 ```
 - PEFT (Parameter-Efficient Fine-Tuning) wraps the model for you.
-
-## 8.4 LoRA vs regular fine-tuning
-| Model | Params | Samples | Time |
-|---|---|---|---|
-| TinyLlama/TinyLlama-1.1B-Chat-v1.0 (regular) | 1.1B | 11k | ~30 min |
-| nvidia/Llama3-ChatQA-1.5-8B (LoRA) | 8B | 11k | ~30 min |
-- LoRA lets you fine-tune a much bigger model in about the same time.
 
 ---
 

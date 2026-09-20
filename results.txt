@@ -1,0 +1,8 @@
+before finetuning
+{'rouge1': 0.145, 'rouge2': 0.007, 'rougeL': 0.11, 'rougeLsum': 0.11}
+
+after finetuning
+{'rouge1': 0.323, 'rouge2': 0.122, 'rougeL': 0.242, 'rougeLsum': 0.254}
+
+LoRA
+LoRA: {'rouge1': 0.258, 'rouge2': 0.037, 'rougeL': 0.184, 'rougeLsum': 0.194}
